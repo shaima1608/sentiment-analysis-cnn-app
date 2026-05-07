@@ -5,7 +5,17 @@ import pickle
 import pandas as pd
 import streamlit as st
 
-from keras.models import load_model
+from keras.models import Model
+from keras.layers import (
+    Input,
+    Embedding,
+    Conv1D,
+    MaxPooling1D,
+    GlobalMaxPooling1D,
+    Dropout,
+    Dense,
+    BatchNormalization
+)
 from keras.preprocessing.sequence import pad_sequences
 
 # ============================================================
@@ -25,7 +35,7 @@ st.set_page_config(
 
 PROJECT_DIR = "."
 
-MODEL_PATH = os.path.join(PROJECT_DIR, "best_improved_CNN_model.keras")
+MODEL_WEIGHTS_PATH = os.path.join(PROJECT_DIR, "improved_cnn.weights.h5")
 TOKENIZER_PATH = os.path.join(PROJECT_DIR, "tokenizer.pkl")
 METADATA_PATH = os.path.join(PROJECT_DIR, "metadata.json")
 IMDB_COMPARISON_PATH = os.path.join(PROJECT_DIR, "imdb_model_comparison.csv")
@@ -36,7 +46,7 @@ TWITTER_COMPARISON_PATH = os.path.join(PROJECT_DIR, "twitter_model_comparison.cs
 # ============================================================
 
 required_files = {
-    "Improved CNN model": MODEL_PATH,
+    "Improved CNN weights": MODEL_WEIGHTS_PATH,
     "Tokenizer": TOKENIZER_PATH,
     "Metadata": METADATA_PATH,
     "IMDB comparison": IMDB_COMPARISON_PATH,
@@ -58,10 +68,62 @@ if missing_files:
 # ============================================================
 # LOAD RESOURCES
 # ============================================================
+def build_improved_cnn(vocab_size, embedding_dim, max_sequence_length):
+    sequence_input = Input(shape=(max_sequence_length,), dtype="int32")
+
+    x = Embedding(
+        input_dim=vocab_size,
+        output_dim=embedding_dim,
+        input_length=max_sequence_length,
+        trainable=True
+    )(sequence_input)
+
+    x = Conv1D(256, 3, activation="relu", padding="same")(x)
+    x = BatchNormalization()(x)
+    x = MaxPooling1D(pool_size=2)(x)
+    x = Dropout(0.3)(x)
+
+    x = Conv1D(128, 4, activation="relu", padding="same")(x)
+    x = BatchNormalization()(x)
+    x = GlobalMaxPooling1D()(x)
+
+    x = Dense(128, activation="relu")(x)
+    x = Dropout(0.5)(x)
+
+    output = Dense(2, activation="softmax")(x)
+
+    model = Model(sequence_input, output)
+
+    model.compile(
+        optimizer="adam",
+        loss="categorical_crossentropy",
+        metrics=["accuracy"]
+    )
+
+    return model
+
 
 @st.cache_resource
 def load_cnn_model():
-    return load_model(MODEL_PATH)
+    with open(TOKENIZER_PATH, "rb") as f:
+        saved_tokenizer = pickle.load(f)
+
+    with open(METADATA_PATH, "r") as f:
+        saved_metadata = json.load(f)
+
+    vocab_size = len(saved_tokenizer.word_index) + 1
+    embedding_dim = saved_metadata.get("embedding_dim", 300)
+    max_sequence_length = saved_metadata.get("improved_max_sequence_length", 80)
+
+    model = build_improved_cnn(
+        vocab_size=vocab_size,
+        embedding_dim=embedding_dim,
+        max_sequence_length=max_sequence_length
+    )
+
+    model.load_weights(MODEL_WEIGHTS_PATH)
+
+    return model
 
 @st.cache_resource
 def load_saved_tokenizer():
