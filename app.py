@@ -80,7 +80,6 @@ def load_csv_tables():
     return imdb_df, twitter_df
 
 try:
-    nlp = load_spacy_model()
     model = load_cnn_model()
     tokenizer = load_saved_tokenizer()
     metadata = load_metadata_file()
