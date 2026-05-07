@@ -4,7 +4,6 @@ import json
 import pickle
 import pandas as pd
 import streamlit as st
-import spacy
 
 from keras.models import load_model
 from keras.preprocessing.sequence import pad_sequences
@@ -61,10 +60,6 @@ if missing_files:
 # ============================================================
 
 @st.cache_resource
-def load_spacy_model():
-    return spacy.blank("en")
-
-@st.cache_resource
 def load_cnn_model():
     return load_model(MODEL_PATH)
 
@@ -102,19 +97,23 @@ MAX_SEQUENCE_LENGTH = metadata.get("improved_max_sequence_length", 80)
 # ============================================================
 
 def spacy_tokenize(text):
-    doc = nlp(str(text))
+    import re
+
+    stop_words = {
+        "a", "an", "the", "and", "or", "but", "if", "then", "is", "are", "was",
+        "were", "be", "been", "being", "to", "of", "in", "on", "for", "with",
+        "as", "by", "at", "from", "this", "that", "these", "those", "it", "its"
+    }
+
+    words = re.findall(r"\b[a-zA-Z']+\b", str(text).lower())
 
     tokens = [
-        token.text.lower()
-        for token in doc
-        if not token.is_punct
-        and not token.is_stop
-        and token.text.strip() != ""
+        word for word in words
+        if word not in stop_words and word.strip() != ""
     ]
 
     return tokens
-
-
+    
 def preprocess_text(text):
     tokens = spacy_tokenize(text)
     cleaned_text = " ".join(tokens)
