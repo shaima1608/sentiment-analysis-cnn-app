@@ -1,0 +1,18 @@
+{
+    "embedding_choice": "word2vec",
+    "embedding_dim": 300,
+    "original_max_sequence_length": 50,
+    "improved_max_sequence_length": 80,
+    "label_order": {
+        "0": "Positive",
+        "1": "Negative"
+    },
+    "original_imdb_accuracy": 0.7200000286102295,
+    "original_imdb_loss": 0.522735059261322,
+    "improved_imdb_accuracy": 0.8266666531562805,
+    "improved_imdb_loss": 0.37124520540237427,
+    "original_twitter_accuracy": 0.5577999949455261,
+    "original_twitter_loss": 0.6804608702659607,
+    "improved_twitter_accuracy": 0.5629000067710876,
+    "improved_twitter_loss": 0.8094518780708313
+}
