@@ -6,8 +6,8 @@ import pandas as pd
 import streamlit as st
 import spacy
 
-from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing.sequence import pad_sequences
+from keras.models import load_model
+from keras.preprocessing.sequence import pad_sequences
 
 # ============================================================
 # PAGE CONFIG
